@@ -3,57 +3,30 @@ import Cart from "./components/Cart/Cart";
 import Layout from "./components/Layout/Layout";
 import Products from "./components/Shop/Products";
 import { Fragment, useEffect } from "react";
-import { cartAction } from "./components/Store/cartReducer";
 import Notification from "./components/UI/Notification";
+import { fetchCartData, sendCartData } from "./components/Store/cart-actions";
 
 let isInitial = true;
 
 function App() {
+  const isShown = useSelector(state => state.cart.isShown);
   const cartItem = useSelector((state) => state.cartItem);
   const dispatch = useDispatch();
   const notification = useSelector((state) => state.cart.notification);
 
   useEffect(() => {
-    const sendCartData = async () => {
-      dispatch(
-        cartAction.showNotification({
-          status: "pending",
-          title: "Sending...",
-          message: "Sending cart data",
-        })
-      );
-      const response = await fetch(
-        "https://shopping-cart-f5573-default-rtdb.firebaseio.com/cartItem.json",
-        {
-          method: "PUT",
-          body: JSON.stringify(cartItem),
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Sending cart data failed!");
-      }
-      const data = await response.json();
-      dispatch(
-        cartAction.showNotification({
-          status: "success",
-          title: "Success",
-          message: "Sending cart data successfully!",
-        })
-      );
-    };
+    dispatch(fetchCartData());
+  }, [])
+
+  useEffect(() => {
     if (isInitial) {
       isInitial = false;
       return;
     }
-    sendCartData().catch((error) => {
-      dispatch(
-        cartAction.showNotification({
-          status: "error",
-          title: "Error",
-          message: "Sending cart data failed!",
-        })
-      );
-    });
+
+    if(cartItem.changed){
+      dispatch(sendCartData(cartItem));
+    }
   }, [cartItem, dispatch]);
 
   return (
@@ -66,7 +39,7 @@ function App() {
         />
       )}
       <Layout>
-        <Cart />
+        {isShown && <Cart />}
         <Products />
       </Layout>
     </Fragment>

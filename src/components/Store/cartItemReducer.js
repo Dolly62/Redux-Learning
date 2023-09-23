@@ -1,19 +1,25 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialCartItems = {
-  cartItems: [],
-  totalQuantity: 0,
-};
 
 const cartItemSlice = createSlice({
   name: "cartItem",
-  initialState: initialCartItems,
+  initialState: {
+    cartItems: [],
+    totalQuantity: 0,
+    changed: false, 
+  },
   reducers: {
+    replaceCart(state, action) {
+      state.totalQuantity = action.payload.totalQuantity;
+      state.cartItems = action.payload.cartItems;
+    },
     addItem(state, action) {
       const newItem = action.payload;
       const existingItem = state.cartItems.find(
         (item) => item.id === newItem.id
       );
+      state.totalQuantity++;
+      state.changed = true;
       if (!existingItem) {
         state.cartItems.push({
           id: newItem.id,
@@ -24,27 +30,30 @@ const cartItemSlice = createSlice({
         });
       } else {
         existingItem.quantity++;
-          (existingItem.totalPrice = existingItem.totalPrice + newItem.price);
+        existingItem.totalPrice = existingItem.totalPrice + newItem.price;
       }
-      state.totalQuantity++;
     },
     removeItem(state, action) {
-      const itemRemove = action.payload;
+      const id = action.payload;
       const existItem = state.cartItems.find(
-        (itemToDel) => itemToDel.id === itemRemove
+        (itemToDel) => itemToDel.id === id
       );
-      if (existItem && existItem.quantity  === 1) {
+      state.totalQuantity--;
+      state.changed = true;
+      if (existItem.quantity === 1) {
         state.cartItems = state.cartItems.filter(
-          (itemToRemove) => itemToRemove.id !== itemRemove
+          (itemToRemove) => itemToRemove.id !== id
         );
       } else {
         existItem.quantity--;
-          (existItem.totalPrice = existItem.totalPrice - itemRemove.price);
+        existItem.totalPrice = existItem.totalPrice - existItem.price;
       }
-      state.totalQuantity--;
-    }
+      
+    },
   },
 });
+
+
 
 export const cartItemAction = cartItemSlice.actions;
 
